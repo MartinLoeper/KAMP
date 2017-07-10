@@ -17,6 +17,7 @@ Bundle-ActivationPolicy: lazy
 Export-Package: edu.kit.ipd.sdq.kamp.architecture,
  edu.kit.ipd.sdq.kamp.derivation,
  edu.kit.ipd.sdq.kamp.propagation,
+ edu.kit.ipd.sdq.kamp.ruledsl.support,
  edu.kit.ipd.sdq.kamp.ui,
  edu.kit.ipd.sdq.kamp.util,
  edu.kit.ipd.sdq.kamp.workplan
