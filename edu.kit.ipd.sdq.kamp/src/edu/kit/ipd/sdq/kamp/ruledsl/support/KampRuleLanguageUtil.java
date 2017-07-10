@@ -15,11 +15,13 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
-public class KampRuleLanguageUtil {
+public final class KampRuleLanguageUtil {
 	public static IWorkspace workspace = ResourcesPlugin.getWorkspace();
     public static IWorkspaceRoot root = workspace.getRoot();
 	
 	public static final String BUNDLE_NAME = "edu.kit.ipd.sdq.kamp.ruledsl.lookup.bundle";
+	
+	private KampRuleLanguageUtil() {}
 	
 	public static IProject getProject(String causingProjectName) {
 		return root.getProject(causingProjectName + "-rules");

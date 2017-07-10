@@ -1,14 +1,17 @@
 package edu.kit.ipd.sdq.kamp.ruledsl.support;
 
-import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.*;
+import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.buildProject;
+import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.getBundleNameForProjectName;
+import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.getDslBundle;
+import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.getProject;
+import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.installAndStartProjectBundle;
+import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.registerProjectBundle;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.swt.internal.ole.win32.CAUUID;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -16,8 +19,10 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
 // this is intentionally a Java class NOT xtend because of import problems for plugins calling xtend files
-public class KampRuleLanguageFacade {
+public final class KampRuleLanguageFacade {
 	private static final BundleContext bundleContext = FrameworkUtil.getBundle(KampRuleLanguageFacade.class).getBundleContext();
+	
+	private KampRuleLanguageFacade() {}
 	
 	public static class KampLanguageService<T> implements AutoCloseable {
 		private final ServiceReference<T> serviceReference;
