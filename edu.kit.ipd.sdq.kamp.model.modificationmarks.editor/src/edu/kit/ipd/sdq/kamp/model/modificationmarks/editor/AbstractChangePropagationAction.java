@@ -2,7 +2,9 @@ package edu.kit.ipd.sdq.kamp.model.modificationmarks.editor;
 
 import java.io.IOException;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.emf.common.util.URI;
@@ -36,6 +38,8 @@ public abstract class AbstractChangePropagationAction <T extends AbstractArchite
 
 	private ISelection selection;
 	
+	protected IProject project;
+	
 	protected abstract AbstractChangePropagationAnalysis<T> createChangePropagationAnalysis();
 	
 	protected abstract AbstractArchitectureVersionPersistency<T> createArchitectureVersionPersistency();
@@ -59,7 +63,8 @@ public abstract class AbstractChangePropagationAction <T extends AbstractArchite
 				String fileName = resourceURI.trimFileExtension().lastSegment();
 				String folderPathString = resourceURI.trimSegments(1).toPlatformString(false);
 				IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(new Path(folderPathString));
-
+				this.project = folder.getProject();
+				
 				T targetversion = null;
 				if (folderPathString != null) {
 					targetversion = architectureVersionPersistency.load(folder, "target");
@@ -85,6 +90,10 @@ public abstract class AbstractChangePropagationAction <T extends AbstractArchite
 				PlatformUI.getWorkbench().saveAllEditors(false);
 			}
 		}	
+	}
+	
+	public IProject getProject() {
+		return this.project;
 	}
 
 	@Override
