@@ -37,7 +37,7 @@ public final class KampRuleLanguageUtil {
 			mon = new NullProgressMonitor();
 		}
 		
-		project.build(IncrementalProjectBuilder.AUTO_BUILD, mon);
+		project.build(IncrementalProjectBuilder.FULL_BUILD, mon);
 	}
 	
 	public static Bundle getDslBundle(String projectName) {
