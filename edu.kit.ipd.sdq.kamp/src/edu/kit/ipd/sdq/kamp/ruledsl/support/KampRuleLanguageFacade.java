@@ -7,6 +7,9 @@ import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.getProje
 import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.installAndStartProjectBundle;
 import static edu.kit.ipd.sdq.kamp.ruledsl.support.KampRuleLanguageUtil.registerProjectBundle;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -17,6 +20,8 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
+
+import edu.kit.ipd.sdq.kamp.model.modificationmarks.AbstractChangePropagationStep;
 
 // this is intentionally a Java class NOT xtend because of import problems for plugins calling xtend files
 public final class KampRuleLanguageFacade {
@@ -143,5 +148,9 @@ public final class KampRuleLanguageFacade {
 
 	public static boolean isKampDslRuleProjectFolder(IProject project) {
 		return project.getName().endsWith("-rules");
+	}
+
+	public static ChangePropagationStepRegistry createChangePropagationStepRegistry() {
+		return new ChangePropagationStepRegistry();
 	}
 }
