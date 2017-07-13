@@ -26,7 +26,7 @@ public final class ChangePropagationStepRegistry implements Iterable<AbstractCha
 		return changePropagationStepClass.cast(this.changePropagationSteps.get(changePropagationStepClass));
 	}
 	
-	public <T extends AbstractChangePropagationStep> Collection<T> getSubtype(Class<T> changePropagationStepClass) {
+	public <T extends AbstractChangePropagationStep> Collection<T> getSubtypes(Class<T> changePropagationStepClass) {
 		Collection<T> results = new ArrayList<>();
 		
 		for(Entry<Class<? extends AbstractChangePropagationStep>, Object> entry : this.changePropagationSteps.entrySet()) {
