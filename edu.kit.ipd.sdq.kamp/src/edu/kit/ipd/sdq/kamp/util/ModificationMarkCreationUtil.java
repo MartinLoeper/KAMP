@@ -8,7 +8,7 @@ import edu.kit.ipd.sdq.kamp.util.LookupUtil.CausingEntityMapping;
 public final class ModificationMarkCreationUtil {
 	private ModificationMarkCreationUtil() { }
 	
-	public static final <T extends AbstractModification<U, ? super EObject>, U, V extends EObject> T createModificationMark(CausingEntityMapping<U, V> affectedElementMapping, T item) {
+	public static final <T extends AbstractModification<? super U, ? super EObject>, U, V extends EObject> T createModificationMark(CausingEntityMapping<U, V> affectedElementMapping, T item) {
 		item.setToolderived(true);
 		item.setAffectedElement(affectedElementMapping.getElement());
 		item.getCausingElements().add(affectedElementMapping.getCausingEntity()); 
