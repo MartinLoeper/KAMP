@@ -4,7 +4,7 @@ import edu.kit.ipd.sdq.kamp.ruledsl.support.IRule;
 
 /**
  * This is a wrapper around an IRule which is to be instantiated.
- * It contains some information which is necessary for the initializer in order to perform the dependecy injection etc.
+ * It contains some information which is necessary for the initializer in order to perform the dependency injection etc.
  * 
  * @author Martin Loeper
  *
