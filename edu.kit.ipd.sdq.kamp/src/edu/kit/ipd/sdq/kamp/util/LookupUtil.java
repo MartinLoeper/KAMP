@@ -34,11 +34,24 @@ public final class LookupUtil {
 	 * 
 	 * @param version the version which contains the elements to be queried and which provides a
 	 * @param targetClass the type of elements which are retrieved and which reference one of the {@code sourceElements}
-	 * @param sourceElements the elements which are referenced by an element of type {@code sourceElements}
+	 * @param sourceElements the elements which are referenced by an element of type {@code targetClass}
 	 * @return a collection containing all elements of type {@code targetClass} which reference one of the given {@code sourceElements} - duplicates are removed
 	 * @throws UnsupportedOperationException thrown if the given {@code version} does not implement the CrossReferenceProvider interface or returns null from getECrossReferenceAdapter
 	 */
 	public static final <T extends EObject, M extends EObject> Collection<T> lookupBackreference(AbstractArchitectureVersion<?> version, Class<T> targetClass, Collection<M> sourceElements) {
+		return lookupBackreference(version, targetClass, sourceElements.stream());
+	}
+	
+	/**
+	 * Returns a collection containing all elements which reference one of the {@code sourceElements} and which are assignable from {@code targetClass}.
+	 * 
+	 * @param version the version which contains the elements to be queried and which provides a
+	 * @param targetClass the type of elements which are retrieved and which reference one of the {@code sourceElements}
+	 * @param sourceStream the elements which are referenced by an element of type {@code targetClass}
+	 * @return a collection containing all elements of type {@code targetClass} which reference one of the given {@code sourceElements} - duplicates are removed
+	 * @throws UnsupportedOperationException thrown if the given {@code version} does not implement the CrossReferenceProvider interface or returns null from getECrossReferenceAdapter
+	 */
+	public static final <T extends EObject, M extends EObject> Collection<T> lookupBackreference(AbstractArchitectureVersion<?> version, Class<T> targetClass, Stream<M> sourceStream) {
 		if(!(version instanceof CrossReferenceProvider)) {
 			throw new UnsupportedOperationException("The given ArchitectureVersion does not support following backreferences. It must implement CrossReferenceProvider to do so.");
 		}
@@ -50,7 +63,7 @@ public final class LookupUtil {
 			throw new UnsupportedOperationException("The given ArchitectureVersion returns null as crossReferenceAdapter which is not allowed.");
 		}
 		
-		List<T> result = sourceElements.stream().flatMap(sig -> crossReferenceAdapter.getInverseReferences(sig, true).stream()).filter(setting -> targetClass.isAssignableFrom(setting.getEObject().getClass())).map(Setting::getEObject).map(obj -> targetClass.cast(obj)).distinct().collect(Collectors.toList());
+		List<T> result = sourceStream.flatMap(sig -> crossReferenceAdapter.getInverseReferences(sig, true).stream()).filter(setting -> targetClass.isAssignableFrom(setting.getEObject().getClass())).map(Setting::getEObject).map(obj -> targetClass.cast(obj)).distinct().collect(Collectors.toList());
 		EqualityHelper eqHelper = new EcoreUtil.EqualityHelper();
 		
 		// remove duplicates
