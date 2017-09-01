@@ -26,7 +26,7 @@ public final class ModificationMarkCreationUtil {
 	 * @param item the item which is to be initialized
 	 * @return a fully initialized item which is ready to be inserted into the tree
 	 */
-	public static final <T extends AbstractModification<? super U, ? super EObject>, U, V extends EObject> T createModificationMark(CausingEntityMapping<U, V> causingEntityMapping, T item) {
+	public static final <T extends AbstractModification<? super U, EObject>, U extends EObject, V extends EObject> T createModificationMark(CausingEntityMapping<U, V> causingEntityMapping, T item) {
 		item.setToolderived(true);
 		item.setAffectedElement(causingEntityMapping.getAffectedElement());
 		item.getCausingElements().addAll(causingEntityMapping.getCausingEntities()); 

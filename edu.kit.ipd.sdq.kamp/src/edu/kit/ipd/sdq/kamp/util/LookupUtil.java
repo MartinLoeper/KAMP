@@ -92,7 +92,7 @@ public final class LookupUtil {
 	 * @param lookupMethod the lookup method which is applied for each element
 	 * @return a stream with mappings from affected elements to their corresponding causing entities
 	 */
-	public static final <U, V> Stream<CausingEntityMapping<U, V>> lookup(AbstractArchitectureVersion<?> version, Class<V> sourceClass, BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod) {				
+	public static final <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, V>> lookup(AbstractArchitectureVersion<?> version, Class<V> sourceClass, BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod) {				
 		return lookUpMarkedObjectsOfAType(version, sourceClass).stream().flatMap(obj -> createPairsStream(lookupMethod, obj, version));
 	}
 	
@@ -104,7 +104,7 @@ public final class LookupUtil {
 	 * @param version the version is the element source which is passed to the {@code lookupMethod} in order to allow the lookup method do to advanced queries (such as resolving backreferences).
 	 * @return a stream of mappings from affected element to causing entities
 	 */
-	private static <U, V> Stream<CausingEntityMapping<U, V>> createPairsStream(BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod, V obj, AbstractArchitectureVersion<?> version) {
+	private static <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, V>> createPairsStream(BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod, V obj, AbstractArchitectureVersion<?> version) {
 		return lookupMethod.apply(obj, version).stream().map(res -> new CausingEntityMapping<U, V>(res, obj));
 	}
 
@@ -117,7 +117,7 @@ public final class LookupUtil {
 	 * @param <U> the type of affected element
 	 * @param <V> the type of causing entity
 	 */
-	public static final class CausingEntityMapping<U, V> {
+	public static final class CausingEntityMapping<U extends EObject, V extends EObject> {
 		private final U affectedElement;
 		private final Collection<V> causingEntities;
 		
