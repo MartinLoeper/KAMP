@@ -8,8 +8,8 @@ import org.eclipse.emf.ecore.EObject;
 
 import edu.kit.ipd.sdq.kamp.model.modificationmarks.AbstractChangePropagationStep;
 import edu.kit.ipd.sdq.kamp.model.modificationmarks.AbstractModification;
+import edu.kit.ipd.sdq.kamp.ruledsl.support.CausingEntityMapping;
 import edu.kit.ipd.sdq.kamp.ruledsl.support.ChangePropagationStepRegistry;
-import edu.kit.ipd.sdq.kamp.util.LookupUtil.CausingEntityMapping;
 
 /**
  * This is a utility class which provides utility methods for the most common creation mark insertions.

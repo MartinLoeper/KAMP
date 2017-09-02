@@ -6,8 +6,8 @@ import java.util.Map;
 import org.eclipse.emf.ecore.EObject;
 
 import edu.kit.ipd.sdq.kamp.model.modificationmarks.AbstractModification;
+import edu.kit.ipd.sdq.kamp.ruledsl.support.CausingEntityMapping;
 import edu.kit.ipd.sdq.kamp.ruledsl.support.ChangePropagationStepRegistry;
-import edu.kit.ipd.sdq.kamp.util.LookupUtil.CausingEntityMapping;
 
 /**
  * This class provides utility methods which support the management of ModificationMarks.
@@ -29,6 +29,7 @@ public final class PropagationStepUtil {
 	}
 	
 	public static boolean isNewEntry(CausingEntityMapping<?, ?> cem, int stepId, ChangePropagationStepRegistry registry) {
+
 		if(stepId < 0)
 			return true;
 		

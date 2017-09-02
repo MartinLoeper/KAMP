@@ -1,14 +1,21 @@
 package edu.kit.ipd.sdq.kamp.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap.KeySetView;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.EStructuralFeature.Setting;
@@ -18,6 +25,8 @@ import org.eclipse.emf.ecore.util.EcoreUtil.EqualityHelper;
 
 import edu.kit.ipd.sdq.kamp.architecture.AbstractArchitectureVersion;
 import edu.kit.ipd.sdq.kamp.architecture.CrossReferenceProvider;
+import edu.kit.ipd.sdq.kamp.ruledsl.support.CausingEntityMapping;
+
 import static edu.kit.ipd.sdq.kamp.architecture.ArchitectureModelLookup.*;
 
 /**
@@ -37,11 +46,12 @@ public final class LookupUtil {
 	 * @param targetClass the type of elements which are retrieved and which reference one of the {@code sourceElements}
 	 * @param featureName the name of the feature which holds the {@code targetClass}, or null if the feature should not be taken into account
 	 * @param sourceElements the elements which are referenced by an element of type {@code targetClass}
+	 * @param addCausingEntities whether the {@code sourceElements} should be added to causing entities inside the CausingEntityMapping
 	 * @return a collection containing all elements of type {@code targetClass} which reference one of the given {@code sourceElements} - duplicates are removed
 	 * @throws UnsupportedOperationException thrown if the given {@code version} does not implement the CrossReferenceProvider interface or returns null from getECrossReferenceAdapter
 	 */
-	public static final <T extends EObject, M extends EObject> Collection<T> lookupBackreference(AbstractArchitectureVersion<?> version, Class<T> targetClass, String featureName, Collection<M> sourceElements) {
-		return lookupBackreference(version, targetClass, featureName, sourceElements.stream());
+	public static final <T extends EObject, M extends EObject> Collection<CausingEntityMapping<T, EObject>> lookupBackwardReference(AbstractArchitectureVersion<?> version, Class<T> targetClass, String featureName, Collection<CausingEntityMapping<M, EObject>> sourceElements, boolean addCausingEntities) {
+		return lookupBackwardReference(version, targetClass, featureName, sourceElements.stream(), addCausingEntities);
 	}
 	
 	/**
@@ -51,10 +61,11 @@ public final class LookupUtil {
 	 * @param targetClass the type of elements which are retrieved and which reference one of the {@code sourceElements}
 	 * @param featureName the name of the feature which holds the {@code targetClass}, or null if the feature should not be taken into account
 	 * @param sourceStream the elements which are referenced by an element of type {@code targetClass}
+	 * @param addCausingEntities whether the {@code sourceElements} should be added to causing entities inside the CausingEntityMapping
 	 * @return a collection containing all elements of type {@code targetClass} which reference one of the given {@code sourceElements} - duplicates are removed
 	 * @throws UnsupportedOperationException thrown if the given {@code version} does not implement the CrossReferenceProvider interface or returns null from getECrossReferenceAdapter
 	 */
-	public static final <T extends EObject, M extends EObject> Collection<T> lookupBackreference(AbstractArchitectureVersion<?> version, Class<T> targetClass, String featureName, Stream<M> sourceStream) {
+	public static final <T extends EObject, M extends EObject> Collection<CausingEntityMapping<T, EObject>> lookupBackwardReference(AbstractArchitectureVersion<?> version, Class<T> targetClass, String featureName, Stream<CausingEntityMapping<M, EObject>> sourceStream, boolean addCausingEntities) {
 		if(!(version instanceof CrossReferenceProvider)) {
 			throw new UnsupportedOperationException("The given ArchitectureVersion does not support following backreferences. It must implement CrossReferenceProvider to do so.");
 		}
@@ -65,23 +76,106 @@ public final class LookupUtil {
 		if(crossReferenceAdapter == null) {
 			throw new UnsupportedOperationException("The given ArchitectureVersion returns null as crossReferenceAdapter which is not allowed.");
 		}
-		
-		List<T> result = sourceStream.flatMap(sig -> crossReferenceAdapter.getInverseReferences(sig, true).stream()).filter(setting -> targetClass.isAssignableFrom(setting.getEObject().getClass()) && (featureName == null || setting.getEStructuralFeature().getName().equals(featureName))).map(Setting::getEObject).map(obj -> targetClass.cast(obj)).distinct().collect(Collectors.toList());
-		EqualityHelper eqHelper = new EcoreUtil.EqualityHelper();
-		
-		// remove duplicates
-		Set<T> distinctResults = new HashSet<>();
-		outer:
-		for(T esc : result) {
-			for(T cCheckObj : distinctResults) {
-				if(eqHelper.equals(esc, cCheckObj)) {
-					continue outer;
-				}
+	
+		return sourceStream.flatMap(new Function<CausingEntityMapping<M, EObject>, Stream<CausingEntityMapping<T, EObject>>>() {
+
+			@Override
+			public Stream<CausingEntityMapping<T, EObject>> apply(CausingEntityMapping<M, EObject> cem) {
+				Collection<Setting> settings = crossReferenceAdapter.getInverseReferences(cem.getAffectedElement(), true);
+				
+				return settings.stream().filter(setting -> targetClass.isAssignableFrom(setting.getEObject().getClass()) && (featureName == null || setting.getEStructuralFeature().getName().equals(featureName))).map(Setting::getEObject).filter(distinctByEqualityHelper()).map(new Function<EObject, CausingEntityMapping<T, EObject>>() {
+
+					@Override
+					public CausingEntityMapping<T, EObject> apply(EObject obj) {
+						if(addCausingEntities) {
+							CausingEntityMapping<T, EObject> newMapping = new CausingEntityMapping<>(targetClass.cast(obj), cem);
+							newMapping.addCausingEntityDistinct(targetClass.cast(obj));
+							
+							return newMapping;
+						}
+						else
+							return new CausingEntityMapping<>(targetClass.cast(obj), cem);
+					}	
+				});
 			}
-			distinctResults.add(esc);
+			
+		}).collect(Collectors.toSet());
+	}
+	
+	public static <T extends EObject> Predicate<T> distinctByEqualityHelper() {
+	    Predicate<T> p = new Predicate<T>() {
+	    	EqualityHelper eqHelper = new EcoreUtil.EqualityHelper();
+	    	KeySetView<EObject, Boolean> seen = ConcurrentHashMap.newKeySet();
+		    
+			@Override
+			public boolean test(T t) {
+				for(EObject eobj : seen) {
+			    	if(eqHelper.equals(eobj, t)) {
+			    		return false;
+			    	}
+			    }
+				
+				seen.add(t);
+				return true;
+			}
+		};
+		
+		return p;
+	}
+	
+//	public static final <T extends EObject, M extends EObject> Collection<CausingEntityMapping<T, M>> lookupBackreference(AbstractArchitectureVersion<?> version, Class<T> targetClass, String featureName, Stream<M> sourceStream) {
+//		
+//	}
+	
+	public static final <M extends EObject, T extends EObject> Stream<CausingEntityMapping<T, EObject>> lookupForwardReference(Stream<CausingEntityMapping<M, EObject>> sourceElements, boolean isFeatureMany, String featureName, Class<T> targetClass, boolean addCausingEntities) {
+		Stream<CausingEntityMapping<T, EObject>> stream;
+		
+		if(isFeatureMany) {
+			stream = sourceElements.flatMap(new Function<CausingEntityMapping<M, EObject>, Stream<CausingEntityMapping<T, EObject>>>() {
+
+				@Override
+				public Stream<CausingEntityMapping<T, EObject>> apply(CausingEntityMapping<M, EObject> e) {
+					// the cast is allowed because we checked whether the feature has the is many flag set
+					@SuppressWarnings("unchecked")
+					EList<T> elements = (EList<T>) e.getAffectedElement().eGet(e.getAffectedElement().eClass().getEStructuralFeature(featureName));
+					List<CausingEntityMapping<T, EObject>> causingEntityMappings = new ArrayList<>();
+					
+					for(T elem : elements) {
+						if(elem != null) {
+							CausingEntityMapping<T, EObject> newMapping = new CausingEntityMapping<>(elem, e);
+							if(addCausingEntities) {
+								newMapping.addCausingEntityDistinct(elem);
+							}
+							
+							causingEntityMappings.add(newMapping);
+						}
+					}
+					
+					return causingEntityMappings.stream();
+				}
+			});
+		} else {
+			stream = sourceElements.map(new Function<CausingEntityMapping<M, EObject>, CausingEntityMapping<T, EObject>>() {
+
+				@Override
+				public CausingEntityMapping<T, EObject> apply(CausingEntityMapping<M, EObject> e) {
+					// this cast is allowed since we check during scoping if the feature holds the type we expect
+					@SuppressWarnings("unchecked")
+					T elem = (T) e.getAffectedElement().eGet(e.getAffectedElement().eClass().getEStructuralFeature(featureName));
+					if(elem == null)
+						return null;
+					
+					CausingEntityMapping<T, EObject> newMapping = new CausingEntityMapping<>(elem, e);
+					if(addCausingEntities) {
+						newMapping.addCausingEntityDistinct(elem);
+					}
+					
+					return newMapping;
+				}
+			});
 		}
 		
-		return distinctResults;
+		return stream.filter(obj -> obj != null);
 	}
 	
 	/**
@@ -92,9 +186,14 @@ public final class LookupUtil {
 	 * @param lookupMethod the lookup method which is applied for each element
 	 * @return a stream with mappings from affected elements to their corresponding causing entities
 	 */
-	public static final <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, V>> lookup(AbstractArchitectureVersion<?> version, Class<V> sourceClass, BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod) {				
-		return lookUpMarkedObjectsOfAType(version, sourceClass).stream().flatMap(obj -> createPairsStream(lookupMethod, obj, version));
+	public static final <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, EObject>> lookup(AbstractArchitectureVersion<?> version, Class<V> sourceClass, BiFunction<V, AbstractArchitectureVersion<?>, Set<CausingEntityMapping<U, EObject>>> lookupMethod) {				
+		return lookUpMarkedObjectsOfAType(version, sourceClass).stream().flatMap(obj -> lookupMethod.apply(obj, version).stream());
 	}
+	
+	// instead of retrieving marked elements, we provide a source stream
+//	public static final <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, V>> lookup(AbstractArchitectureVersion<?> version, Stream<V> source, BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod) {				
+//		return source.flatMap(obj -> createPairsStream(lookupMethod, obj, version));
+//	}
 	
 	/**
 	 * Performs the {@code lookupMethod} on the given {@code obj} and creates a {@link CausingEntityMapping} for the affected elements.
@@ -104,60 +203,7 @@ public final class LookupUtil {
 	 * @param version the version is the element source which is passed to the {@code lookupMethod} in order to allow the lookup method do to advanced queries (such as resolving backreferences).
 	 * @return a stream of mappings from affected element to causing entities
 	 */
-	private static <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, V>> createPairsStream(BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod, V obj, AbstractArchitectureVersion<?> version) {
-		return lookupMethod.apply(obj, version).stream().map(res -> new CausingEntityMapping<U, V>(res, obj));
-	}
-
-	/**
-	 * This class maps an affected element to its corresponding causing entity.
-	 * A causing entity is the element which is responsible for affected element being marked.
-	 * 
-	 * @author Martin Loeper
-	 *
-	 * @param <U> the type of affected element
-	 * @param <V> the type of causing entity
-	 */
-	public static final class CausingEntityMapping<U extends EObject, V extends EObject> {
-		private final U affectedElement;
-		private final Collection<V> causingEntities;
-		
-		/**
-		 * Creates a new mapping from an affected element to causing entities.
-		 * 
-		 * @param affectedElement the affected element
-		 * @param causingEntities the causing entities
-		 */
-		public CausingEntityMapping(U affectedElement, Collection<V> causingEntities) {
-			this.affectedElement = affectedElement;
-			this.causingEntities = causingEntities;
-		}
-
-		/**
-		 * Creates a new mapping from an affected element to causing entities.
-		 * This is basically a convenience constructor for passing one single causing entity instead of a collection of causing entities.
-		 * 
-		 * @param affectedElement the affected element
-		 * @param causingEntity one single causing entity
-		 */
-		public CausingEntityMapping(U affectedElement, V causingEntity) {
-			this(affectedElement, Collections.singleton(causingEntity));
-		}
-		
-		/**
-		 * Returns the affected element.
-		 * @return the affected element
-		 */
-		public U getAffectedElement() {
-			return affectedElement;
-		}
-
-		// TODO there might be more than one causing entity! We should make this a collection!!
-		/**
-		 * Returns the causing entities.
-		 * @return the causing entities
-		 */
-		public Collection<V> getCausingEntities() {
-			return causingEntities;
-		}
-	}
+//	private static <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, V>> createPairsStream(BiFunction<V, AbstractArchitectureVersion<?>, Set<U>> lookupMethod, V obj, AbstractArchitectureVersion<?> version) {
+//		return lookupMethod.apply(obj, version).stream().map(res -> new CausingEntityMapping<U, V>(res, obj));
+//	}
 }
