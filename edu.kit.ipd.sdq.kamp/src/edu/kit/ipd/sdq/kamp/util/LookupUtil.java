@@ -186,8 +186,8 @@ public final class LookupUtil {
 	 * @param lookupMethod the lookup method which is applied for each element
 	 * @return a stream with mappings from affected elements to their corresponding causing entities
 	 */
-	public static final <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, EObject>> lookup(AbstractArchitectureVersion<?> version, Class<V> sourceClass, BiFunction<V, AbstractArchitectureVersion<?>, Set<CausingEntityMapping<U, EObject>>> lookupMethod) {				
-		return lookUpMarkedObjectsOfAType(version, sourceClass).stream().flatMap(obj -> lookupMethod.apply(obj, version).stream());
+	public static final <U extends EObject, V extends EObject> Stream<CausingEntityMapping<U, EObject>> lookup(AbstractArchitectureVersion<?> version, Class<V> sourceClass, BiFunction<CausingEntityMapping<V, EObject>, AbstractArchitectureVersion<?>, Set<CausingEntityMapping<U, EObject>>> lookupMethod) {				
+		return lookUpMarkedObjectsOfAType(version, sourceClass).stream().flatMap(obj -> lookupMethod.apply(new CausingEntityMapping<V, EObject>(obj), version).stream());
 	}
 	
 	// instead of retrieving marked elements, we provide a source stream
