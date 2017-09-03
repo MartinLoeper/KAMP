@@ -1,11 +1,10 @@
 package edu.kit.ipd.sdq.kamp.util;
 
+import static edu.kit.ipd.sdq.kamp.architecture.ArchitectureModelLookup.lookUpMarkedObjectsOfAType;
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentHashMap.KeySetView;
@@ -17,7 +16,6 @@ import java.util.stream.Stream;
 
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.EStructuralFeature.Setting;
 import org.eclipse.emf.ecore.util.ECrossReferenceAdapter;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -26,8 +24,6 @@ import org.eclipse.emf.ecore.util.EcoreUtil.EqualityHelper;
 import edu.kit.ipd.sdq.kamp.architecture.AbstractArchitectureVersion;
 import edu.kit.ipd.sdq.kamp.architecture.CrossReferenceProvider;
 import edu.kit.ipd.sdq.kamp.ruledsl.support.CausingEntityMapping;
-
-import static edu.kit.ipd.sdq.kamp.architecture.ArchitectureModelLookup.*;
 
 /**
  * This is a utility class which provides utility methods for the most common lookups which are shared across

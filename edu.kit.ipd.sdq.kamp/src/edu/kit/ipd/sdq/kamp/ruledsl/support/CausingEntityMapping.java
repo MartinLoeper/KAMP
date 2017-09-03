@@ -54,7 +54,7 @@ public final class CausingEntityMapping<U extends EObject, V extends EObject> {
 	}
 	
 	public CausingEntityMapping(U affectedElement, CausingEntityMapping<?, V> cem) {
-		this(affectedElement, cem.getCausingEntities());
+		this(affectedElement, new HashSet<>(cem.getCausingEntities()));
 	}
 	
 	/**
@@ -67,11 +67,11 @@ public final class CausingEntityMapping<U extends EObject, V extends EObject> {
 
 	// TODO there might be more than one causing entity! We should make this a collection!!
 	/**
-	 * Returns the causing entities.
+	 * Returns a copy of the set with causing entities.
 	 * @return the causing entities
 	 */
 	public Set<V> getCausingEntities() {
-		return causingEntities;
+		return new HashSet<>(causingEntities);
 	}
 
 	public void addCausingEntityDistinct(V element) {
