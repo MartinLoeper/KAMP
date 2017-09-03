@@ -43,7 +43,7 @@ public final class PropagationStepUtil {
 		return mapping.get(cem.getAffectedElement()) == null;
 	}
 	
-	public static void addToExistingModificationMark(CausingEntityMapping<?, ?> cem, int stepId, ChangePropagationStepRegistry registry) {
+	public static AbstractModification<?, EObject> getExistingModificationMark(CausingEntityMapping<?, ?> cem, int stepId, ChangePropagationStepRegistry registry) {
 		if(stepId < 0) {
 			throw new IllegalArgumentException("The stepId must be non-negative.");
 		}
@@ -53,7 +53,11 @@ public final class PropagationStepUtil {
 			throw new IllegalStateException("Could not find registry. This should not happen. Please ensure you called isNewEntry() before.");
 		}
 		
-		AbstractModification<?, EObject> modificationMark = mapping.get(cem.getAffectedElement());
+		return mapping.get(cem.getAffectedElement());
+	}
+	
+	public static void addToExistingModificationMark(CausingEntityMapping<?, ?> cem, int stepId, ChangePropagationStepRegistry registry) {		
+		AbstractModification<?, EObject> modificationMark = getExistingModificationMark(cem, stepId, registry);
 		if(modificationMark == null) { 
 			throw new IllegalStateException("Could not find modification mark. Please ensure that the call to isNewEntry() returned false.");
 		}
